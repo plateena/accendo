@@ -1,0 +1,61 @@
+services:
+  # MySQL service
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_DATABASE: homework
+      MYSQL_USER: accendo
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/db_data:/var/lib/mysql
+      - ./mysql/dumps:/docker-entrypoint-initdb.d
+
+  # Laravel backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./backend/src:/var/www/html
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: homework
+      DB_USERNAME: accendo
+      DB_PASSWORD: secret
+
+  # React frontend service
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   restart: always
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend/src:/app
+
+  # Nginx
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8000:80"
+      - "3000:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - backend
+      # - frontend
+
+volumes:
+  db_data:
